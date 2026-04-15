@@ -1,0 +1,460 @@
+```html
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MathMaster 9 PRO | Edição Ultimate</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; margin: 0; overflow: hidden; -webkit-tap-highlight-color: transparent; }
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .math-font { font-family: 'Courier New', Courier, monospace; font-weight: bold; }
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .option-correct { border-color: #10b981 !important; background-color: rgba(16, 185, 129, 0.1) !important; color: #10b981 !important; }
+        .option-wrong { border-color: #ef4444 !important; background-color: rgba(239, 68, 68, 0.1) !important; color: #ef4444 !important; }
+        .content-container { height: calc(100vh - 64px); }
+        @media (min-width: 768px) { .content-container { height: 100vh; } }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const CONTENT_DATA = [
+            {
+                id: 'fra-pot',
+                category: 'Aritmética',
+                title: 'Frações e Potenciação',
+                description: 'Cálculo de bases racionais com expoentes inteiros positivos e negativos.',
+                theory: [
+                    "Como funciona: Eleva-se o numerador e o denominador à potência indicada.",
+                    "Regra do Inverso: Uma base elevada a expoente negativo é igual ao inverso da base com expoente positivo.",
+                    "Potência de Potência: Mantém-se a base e multiplicam-se os expoentes."
+                ],
+                examples: {
+                    facil: { p: "Calcula (2/5)²", s: "2²/5² = 4/25" },
+                    medio: { p: "Calcula (1/3)⁻²", s: "(3/1)² = 9" },
+                    dificil: { p: "Simplifica (2/3)⁻² · (2/3)³", s: "(2/3)⁻²⁺³ = (2/3)¹ = 2/3" },
+                    extremo: { p: "Calcula [ (1/2)⁻² + (1/3)⁻¹ ]⁻¹", s: "[ 4 + 3 ]⁻¹ = 7⁻¹ = 1/7" }
+                },
+                formulas: [{l: "Potência", m: "(a/b)ⁿ = aⁿ/bⁿ"}, {l: "Inverso", m: "(a/b)⁻ⁿ = (b/a)ⁿ"}],
+                quizzes: [
+                    { q: "Qual o valor de (3/4)²?", opt: ["9/8", "6/16", "9/16", "3/16"], corr: 2 },
+                    { q: "O valor de 5⁻² é:", opt: ["-25", "1/25", "1/10", "0.25"], corr: 1 },
+                    { q: "Calcula (1/2)⁻³:", opt: ["1/8", "6", "8", "-8"], corr: 2 }
+                ]
+            },
+            {
+                id: 'rad-basico',
+                category: 'Radiciação',
+                title: 'Radicais e Propriedades',
+                description: 'Exploração de raízes, índices e propriedades multiplicativas.',
+                theory: [
+                    "Como funciona: A radiciação procura um número que, multiplicado por si mesmo n vezes, resulte no radicando.",
+                    "Raiz de Produto: A raiz de um produto é o produto das raízes individuais.",
+                    "Raiz de Quociente: A raiz de uma fração é a divisão das raízes do numerador e denominador."
+                ],
+                examples: {
+                    facil: { p: "Calcula √81", s: "9 (pois 9² = 81)" },
+                    medio: { p: "Calcula ³√-27", s: "-3 (pois (-3)³ = -27)" },
+                    dificil: { p: "Simplifica √2 · √18", s: "√36 = 6" },
+                    extremo: { p: "Calcula √(144/169)", s: "√144 / √169 = 12/13" }
+                },
+                formulas: [{l: "Produto", m: "ⁿ√a · ⁿ√b = ⁿ√ab"}, {l: "Quociente", m: "ⁿ√(a/b) = ⁿ√a / ⁿ√b"}],
+                quizzes: [
+                    { q: "Qual a raiz quadrada de 121?", opt: ["10", "11", "12", "13"], corr: 1 },
+                    { q: "Quanto vale ³√64?", opt: ["4", "8", "16", "2"], corr: 0 },
+                    { q: "O valor de √9 + √16 é:", opt: ["√25", "5", "7", "12"], corr: 2 }
+                ]
+            },
+            {
+                id: 'rad-oper-soma',
+                category: 'Operações com Radicais',
+                title: 'Adição e Subtração',
+                description: 'Agrupamento de termos com radicais semelhantes.',
+                theory: [
+                    "Como funciona: Só podemos somar ou subtrair radicais se o índice e o radicando forem idênticos.",
+                    "Radicais Semelhantes: Funcionam como 'variáveis' na álgebra. Ex: 2√x + 3√x = 5√x.",
+                    "Transformação: Às vezes é necessário simplificar para tornar os radicais semelhantes."
+                ],
+                examples: {
+                    facil: { p: "Calcula 4√5 + 2√5", s: "6√5" },
+                    medio: { p: "Calcula √8 + √2", s: "2√2 + √2 = 3√2" },
+                    dificil: { p: "Calcula √12 - √3 + √27", s: "2√3 - √3 + 3√3 = 4√3" },
+                    extremo: { p: "Simplifica √50 - 2√18 + √8", s: "5√2 - 2(3√2) + 2√2 = 5√2 - 6√2 + 2√2 = √2" }
+                },
+                formulas: [{l: "Soma", m: "a√x + b√x = (a+b)√x"}],
+                quizzes: [
+                    { q: "Quanto é 7√2 - 3√2?", opt: ["4", "4√2", "10√2", "4√0"], corr: 1 },
+                    { q: "Resultado de √12 + √3:", opt: ["√15", "2√3", "3√3", "4√3"], corr: 2 },
+                    { q: "Calcula 5√7 - √7 + 2√7:", opt: ["6√7", "7√7", "8√7", "5√21"], corr: 0 }
+                ]
+            },
+            {
+                id: 'rad-oper-mult',
+                category: 'Operações com Radicais',
+                title: 'Multiplicação e Divisão',
+                description: 'Operações entre radicais e racionalização básica.',
+                theory: [
+                    "Multiplicação: Multiplicam-se os índices se forem iguais. Multiplicam-se coeficientes e radicandos.",
+                    "Divisão: Divide-se o radicando. Se houver raiz no denominador, deve-se racionalizar.",
+                    "Racionalização: Técnica para remover raízes do divisor multiplicando por um fator conveniente."
+                ],
+                examples: {
+                    facil: { p: "Calcula √3 · √5", s: "√15" },
+                    medio: { p: "Calcula 2√6 · 3√2", s: "6√12 = 6(2√3) = 12√3" },
+                    dificil: { p: "Racionaliza 1/√2", s: "(1·√2)/(√2·√2) = √2/2" },
+                    extremo: { p: "Calcula (√18 / √2) · √5", s: "√9 · √5 = 3√5" }
+                },
+                formulas: [{l: "Mult.", m: "√a · √b = √ab"}, {l: "Racional.", m: "x/√a = x√a/a"}],
+                quizzes: [
+                    { q: "Quanto é √2 · √8?", opt: ["√10", "4", "16", "√16"], corr: 1 },
+                    { q: "Resultado de √30 / √6:", opt: ["5", "√5", "√24", "180"], corr: 1 },
+                    { q: "Racionaliza 10/√5:", opt: ["2", "2√5", "√50", "10√5/5"], corr: 1 }
+                ]
+            },
+            {
+                id: 'rad-avancado',
+                category: 'Radiciação Avançada',
+                title: 'Potência e Raiz de Radicais',
+                description: 'Aprofundamento em radicais sobrepostos e potências de raízes.',
+                theory: [
+                    "Potência de um Radical: O expoente afeta apenas o radicando (número dentro da raiz).",
+                    "Raiz de um Radical: Multiplicam-se os índices das raízes. Ex: √(³√x) = ⁶√x.",
+                    "Como funciona: Estas propriedades permitem condensar expressões complexas num único radical."
+                ],
+                examples: {
+                    facil: { p: "Calcula (√7)²", s: "7" },
+                    medio: { p: "Calcula √(√16)", s: "⁴√16 = 2" },
+                    dificil: { p: "Calcula (³√2)⁶", s: "³√(2⁶) = 2² = 4" },
+                    extremo: { p: "Simplifica √[ √ (³√x²⁴) ]", s: "¹²√x²⁴ = x²" }
+                },
+                formulas: [{l: "Potência", m: "(ⁿ√a)ᵐ = ⁿ√aᵐ"}, {l: "Raiz/Raiz", m: "ᵐ√(ⁿ√a) = ᵐⁿ√a"}],
+                quizzes: [
+                    { q: "Quanto vale (√3)⁴?", opt: ["3", "9", "27", "81"], corr: 1 },
+                    { q: "Simplifica √(√81):", opt: ["9", "3", "81", "√9"], corr: 1 },
+                    { q: "Qual o índice resultante de ⁴√(³√x)?", opt: ["7", "1", "12", "x"], corr: 2 }
+                ]
+            },
+            {
+                id: 'alg-prods',
+                category: 'Álgebra',
+                title: 'Produtos Notáveis e Fatoração',
+                description: 'Desenvolvimento de expressões e fator comum em evidência.',
+                theory: [
+                    "Quadrado da Soma: (a+b)² = a² + 2ab + b².",
+                    "Diferença de Quadrados: (a+b)(a-b) = a² - b².",
+                    "Fator Comum: Colocar em evidência o maior divisor comum entre os termos da expressão."
+                ],
+                examples: {
+                    facil: { p: "Expande (x+2)²", s: "x² + 4x + 4" },
+                    medio: { p: "Fatora 5x + 10y", s: "5(x + 2y)" },
+                    dificil: { p: "Expande (2a - 3)²", s: "4a² - 12a + 9" },
+                    extremo: { p: "Fatora x² - 16", s: "(x+4)(x-4)" }
+                },
+                formulas: [{l: "Soma", m: "(a+b)² = a²+2ab+b²"}, {l: "Fator", m: "ax+ay = a(x+y)"}],
+                quizzes: [
+                    { q: "Resultado de (x-5)²:", opt: ["x²-25", "x²-10x+25", "x²+25", "x²-5x+25"], corr: 1 },
+                    { q: "Fatora 4x² + 8x:", opt: ["4(x²+2x)", "4x(x+2)", "x(4x+8)", "12x³"], corr: 1 },
+                    { q: "Desenvolve (x+3)(x-3):", opt: ["x²+9", "x²-9", "x²-6x+9", "x²+6x+9"], corr: 1 }
+                ]
+            },
+            {
+                id: 'prop-raz',
+                category: 'Proporcionalidade',
+                title: 'Razão, Proporção e Escala',
+                description: 'Comparações de grandezas e aplicações em mapas e escalas reais.',
+                theory: [
+                    "Razão: É a divisão entre dois valores (a/b).",
+                    "Proporção: Igualdade entre duas razões. Resolve-se com a 'Regra de Três'.",
+                    "Escala: Razão entre a medida no mapa (d) e a medida real (D). Ex: 1:100."
+                ],
+                examples: {
+                    facil: { p: "Razão entre 10 e 50", s: "10/50 = 1/5 = 0.2" },
+                    medio: { p: "Resolve 4/x = 8/20", s: "8x = 80 => x = 10" },
+                    dificil: { p: "Escala 1:500. 2cm no mapa é quanto no real?", s: "2 * 500 = 1000cm = 10m" },
+                    extremo: { p: "Num mapa 1:50.000, 10km reais são quantos cm?", s: "1.000.000cm / 50.000 = 20cm" }
+                },
+                formulas: [{l: "Prop.", m: "a/b = c/d => ad = bc"}, {l: "Escala", m: "E = d / D"}],
+                quizzes: [
+                    { q: "Se 3/5 = x/25, quanto vale x?", opt: ["15", "10", "20", "5"], corr: 0 },
+                    { q: "A razão entre 30 min e 1 hora é:", opt: ["30", "2", "0.5", "1/3"], corr: 2 },
+                    { q: "Escala 1:200. Um muro de 4m real tem quanto no desenho?", opt: ["2cm", "20cm", "0.5cm", "8cm"], corr: 0 }
+                ]
+            },
+            {
+                id: 'prop-direta',
+                category: 'Proporcionalidade',
+                title: 'Partes Diretamente Proporcionais',
+                description: 'Divisão de um número em partes proporcionais a outros valores.',
+                theory: [
+                    "Como funciona: Quando dividimos um valor em partes proporcionais, a razão entre cada parte e o seu peso é constante (k).",
+                    "Constante k: É o 'valor de cada unidade de proporção'.",
+                    "Cálculo: k = Valor Total / Soma dos pesos."
+                ],
+                examples: {
+                    facil: { p: "Divide 10 prop. a 2 e 3", s: "k=10/5=2. Partes: 4 e 6" },
+                    medio: { p: "Divide 100 prop. a 1, 4 e 5", s: "k=100/10=10. Partes: 10, 40, 50" },
+                    dificil: { p: "x e y são prop. a 2 e 3. x+y=50. Achar x.", s: "k=50/5=10. x=2*10=20" },
+                    extremo: { p: "Divide 120€ prop. às idades 10, 20 e 30", s: "k=120/60=2. Partes: 20€, 40€, 60€" }
+                },
+                formulas: [{l: "Constante", m: "k = Total / ΣPartes"}, {l: "Parte n", m: "Pₙ = k · Pesoₙ"}],
+                quizzes: [
+                    { q: "Divide 40 prop. a 1 e 3. A maior parte é:", opt: ["10", "30", "20", "25"], corr: 1 },
+                    { q: "Se 90 é dividido prop. a 4 e 5, as partes são:", opt: ["40 e 50", "30 e 60", "45 e 45", "10 e 80"], corr: 0 },
+                    { q: "Numa divisão prop. a 2 e 3, se a menor parte é 6, o total é:", opt: ["10", "15", "18", "20"], corr: 1 }
+                ]
+            },
+            {
+                id: 'porcentagem',
+                category: 'Aritmética',
+                title: 'Porcentagem',
+                description: 'Cálculo de variações, taxas e descontos.',
+                theory: [
+                    "Como funciona: Porcentagem é uma fração com denominador 100.",
+                    "Aumento: Valor * (1 + taxa/100).",
+                    "Desconto: Valor * (1 - taxa/100)."
+                ],
+                examples: {
+                    facil: { p: "25% de 200", s: "0.25 * 200 = 50" },
+                    medio: { p: "Aumento de 10% sobre 150€", s: "150 * 1.10 = 165€" },
+                    dificil: { p: "Produto de 80€ com 15% de desconto", s: "80 * 0.85 = 68€" },
+                    extremo: { p: "Se 40% de x é 80, quanto é x?", s: "x = 80 / 0.40 = 200" }
+                },
+                formulas: [{l: "Cálculo", m: "V = (i/100) · Total"}, {l: "Fator", m: "F = 1 ± (i/100)"}],
+                quizzes: [
+                    { q: "Quanto é 30% de 50?", opt: ["1.5", "15", "30", "5"], corr: 1 },
+                    { q: "Um desconto de 20% em 200€ resulta em:", opt: ["180€", "160€", "40€", "140€"], corr: 1 },
+                    { q: "0.05 equivale a que porcentagem?", opt: ["0.5%", "50%", "5%", "0.05%"], corr: 2 }
+                ]
+            }
+        ];
+
+        const App = () => {
+            const [active, setActive] = useState(CONTENT_DATA[0].id);
+            const [completed, setCompleted] = useState({});
+            const [exampleLevel, setExampleLevel] = useState('facil');
+            const [feedback, setFeedback] = useState(null);
+            const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+            const [quizStep, setQuizStep] = useState(0);
+
+            const curr = CONTENT_DATA.find(d => d.id === active);
+            const currentQuiz = curr.quizzes[quizStep];
+            const prog = (Object.keys(completed).length / CONTENT_DATA.length) * 100;
+
+            useEffect(() => { 
+                if (window.lucide) window.lucide.createIcons(); 
+                setFeedback(null);
+                setQuizStep(0);
+                window.scrollTo(0,0);
+            }, [active]);
+
+            const handleQuiz = (idx) => {
+                if (idx === currentQuiz.corr) {
+                    setFeedback('correct');
+                    setTimeout(() => {
+                        if (quizStep < curr.quizzes.length - 1) {
+                            setQuizStep(quizStep + 1);
+                            setFeedback(null);
+                        } else {
+                            setCompleted({...completed, [active]: true});
+                        }
+                    }, 800);
+                } else {
+                    setFeedback('wrong');
+                    setTimeout(() => setFeedback(null), 1200);
+                }
+            };
+
+            const levelStyles = {
+                facil: "text-emerald-500 bg-emerald-500/10",
+                medio: "text-blue-500 bg-blue-500/10",
+                dificil: "text-orange-500 bg-orange-500/10",
+                extremo: "text-red-500 bg-red-500/10"
+            };
+
+            return (
+                <div className="flex h-screen flex-col md:flex-row bg-slate-50 overflow-hidden">
+                    
+                    {/* MOBILE TOP NAV */}
+                    <div className="md:hidden flex items-center justify-between p-4 bg-slate-900 text-white z-50 shadow-xl">
+                        <div className="flex items-center gap-2">
+                            <span className="text-blue-500 italic font-black text-xl">M</span>
+                            <span className="font-bold text-[10px] uppercase tracking-widest">MathMaster PRO Ultimate</span>
+                        </div>
+                        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 bg-slate-800 rounded-lg">
+                            <i data-lucide={isSidebarOpen ? "x" : "menu"} className="w-5 h-5"></i>
+                        </button>
+                    </div>
+
+                    {/* SIDEBAR */}
+                    <aside className={`fixed inset-0 z-40 transform transition-transform duration-300 md:relative md:translate-x-0 w-full md:w-80 bg-slate-900 text-white flex flex-col ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                        <div className="p-8 border-b border-slate-800 hidden md:block">
+                            <h1 className="text-xl font-black tracking-tighter">
+                                <span className="text-blue-500 italic">M</span>MATHMASTER 9 <span className="text-[9px] bg-blue-600 px-1 rounded uppercase">Pro</span>
+                            </h1>
+                            <div className="mt-6">
+                                <div className="flex justify-between text-[9px] font-bold mb-1 text-slate-500 uppercase tracking-widest">
+                                    <span>Domínio Curricular</span>
+                                    <span className="text-blue-400">{Math.round(prog)}%</span>
+                                </div>
+                                <div className="h-1 w-full bg-slate-800 rounded-full">
+                                    <div className="h-full bg-blue-500 transition-all duration-1000 shadow-[0_0_10px_rgba(59,130,246,0.5)]" style={{ width: `${prog}%` }}></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <nav className="flex-1 overflow-y-auto custom-scroll p-4 space-y-1 mt-16 md:mt-0">
+                            {CONTENT_DATA.map(item => (
+                                <button key={item.id} onClick={() => { setActive(item.id); setIsSidebarOpen(false); }}
+                                    className={`w-full flex items-center gap-3 px-4 py-4 md:py-3 rounded-xl transition-all ${active === item.id ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-800 hover:text-slate-300'}`}>
+                                    <div className="text-left flex-1 min-w-0">
+                                        <p className={`text-[7px] font-black uppercase mb-0.5 ${active === item.id ? 'text-blue-200' : 'text-slate-600'}`}>{item.category}</p>
+                                        <p className="font-bold text-[12px] md:text-[11px] truncate">{item.title}</p>
+                                    </div>
+                                    {completed[item.id] && <i data-lucide="check-circle" className="w-4 h-4 text-emerald-400"></i>}
+                                </button>
+                            ))}
+                        </nav>
+                    </aside>
+
+                    {/* MAIN CONTENT */}
+                    <main className="flex-1 overflow-y-auto custom-scroll bg-white content-container">
+                        <div className="max-w-4xl mx-auto p-6 md:p-16 fade-in" key={active}>
+                            <header className="mb-10">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <span className="h-px w-8 bg-blue-600"></span>
+                                    <span className="text-blue-600 text-[10px] font-black uppercase tracking-widest">{curr.category}</span>
+                                </div>
+                                <h2 className="text-3xl md:text-6xl font-black text-slate-900 mb-6 tracking-tight leading-none">{curr.title}</h2>
+                                <p className="text-base md:text-lg text-slate-500 leading-relaxed max-w-2xl">{curr.description}</p>
+                            </header>
+
+                            {/* EXAMPLES SECTION - 4 LEVELS */}
+                            <div className="mb-12 bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-2xl">
+                                <div className="flex flex-wrap p-2 bg-slate-800/50">
+                                    {['facil', 'medio', 'dificil', 'extremo'].map(lvl => (
+                                        <button key={lvl} onClick={() => setExampleLevel(lvl)} 
+                                            className={`flex-1 py-3 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all m-1 
+                                            ${exampleLevel === lvl ? 'bg-white text-slate-900 shadow-xl' : 'text-slate-500 hover:text-slate-300'}`}>
+                                            {lvl === 'facil' ? 'Fácil' : lvl === 'medio' ? 'Médio' : lvl === 'dificil' ? 'Difícil' : 'Extremo'}
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="p-8 md:p-10">
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${levelStyles[exampleLevel]}`}>
+                                            Nível {exampleLevel}
+                                        </span>
+                                    </div>
+                                    <div className="space-y-6">
+                                        <div>
+                                            <p className="text-slate-500 text-[10px] font-black uppercase mb-2 tracking-widest">Problema Proposto:</p>
+                                            <p className="text-white text-xl md:text-2xl font-bold tracking-tight leading-tight">{curr.examples[exampleLevel].p}</p>
+                                        </div>
+                                        <div className="bg-white/5 border border-white/10 p-6 rounded-2xl backdrop-blur-sm">
+                                            <p className="text-blue-400 text-[10px] font-black uppercase mb-3 tracking-widest flex items-center gap-2">
+                                                <i data-lucide="zap" className="w-3 h-3 text-yellow-400"></i> Resolução Comentada
+                                            </p>
+                                            <p className="text-slate-300 text-lg font-medium italic math-font">
+                                                {curr.examples[exampleLevel].s}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                                <div className="lg:col-span-2 space-y-8">
+                                    <section className="bg-slate-50 p-8 rounded-3xl border border-slate-100">
+                                        <h3 className="font-black text-slate-800 mb-6 flex items-center gap-3 text-xs uppercase tracking-tighter">
+                                            <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center shadow-sm"><i data-lucide="book" className="w-4 h-4"></i></div>
+                                            Teoria & Funcionamento
+                                        </h3>
+                                        <div className="space-y-4">
+                                            {curr.theory.map((t, i) => (
+                                                <div key={i} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm text-slate-600 text-sm leading-relaxed relative overflow-hidden group hover:border-blue-200 transition-colors">
+                                                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 group-hover:w-1.5 transition-all"></div>
+                                                    {t}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </section>
+                                </div>
+                                <div className="space-y-6">
+                                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1 flex items-center gap-2">
+                                        <i data-lucide="code" className="w-3 h-3"></i> Fórmulas Base
+                                    </h3>
+                                    {curr.formulas.map((f, i) => (
+                                        <div key={i} className="bg-slate-900 p-6 rounded-[2rem] border border-slate-700 shadow-xl text-center transform hover:-translate-y-1 transition-all duration-300 group">
+                                            <span className="text-blue-400 text-[8px] font-black uppercase block mb-3 opacity-60 group-hover:opacity-100 transition-opacity">{f.l}</span>
+                                            <div className="text-white math-font text-xl font-bold tracking-wider">{f.m}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* QUIZ SECTION */}
+                            <div className="mt-16 bg-slate-900 rounded-[3.5rem] p-8 md:p-14 text-white shadow-2xl relative overflow-hidden border border-white/5">
+                                <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none rotate-12">
+                                    <i data-lucide="award" className="w-64 h-64"></i>
+                                </div>
+                                <div className="relative z-10 text-center">
+                                    <div className="flex justify-center gap-2 mb-10">
+                                        {curr.quizzes.map((_, i) => (
+                                            <div key={i} className={`h-1.5 w-12 rounded-full transition-all duration-500 ${i === quizStep ? 'bg-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.6)]' : i < quizStep || completed[active] ? 'bg-emerald-500' : 'bg-slate-700'}`}></div>
+                                        ))}
+                                    </div>
+                                    <div className="inline-block px-5 py-1.5 bg-white/5 border border-white/10 rounded-full text-[9px] font-black uppercase tracking-[0.3em] text-blue-400 mb-8">Nível Académico</div>
+                                    <p className="text-2xl md:text-4xl font-black mb-12 tracking-tight leading-tight max-w-2xl mx-auto">{currentQuiz.q}</p>
+                                    
+                                    <div className="grid grid-cols-1 gap-4 max-w-xl mx-auto">
+                                        {currentQuiz.opt.map((o, i) => (
+                                            <button key={i} disabled={feedback === 'correct' || completed[active]} onClick={() => handleQuiz(i)} 
+                                                className={`group relative p-6 rounded-2xl bg-slate-800 border-2 transition-all font-bold text-lg text-left flex items-center gap-5
+                                                ${completed[active] && i === currentQuiz.corr ? 'option-correct' : 
+                                                  feedback === 'correct' && i === currentQuiz.corr ? 'option-correct shadow-[0_0_20px_rgba(16,185,129,0.2)]' :
+                                                  feedback === 'wrong' && !completed[active] ? 'border-red-500/50 bg-red-500/5 animate-shake' : 'border-slate-700 hover:border-blue-500 hover:bg-slate-750'}`}>
+                                                <span className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm transition-colors ${feedback === 'correct' && i === currentQuiz.corr ? 'bg-emerald-500 text-white' : 'bg-slate-900 text-blue-500 group-hover:bg-blue-600 group-hover:text-white'}`}>
+                                                    {String.fromCharCode(65 + i)}
+                                                </span>
+                                                <span className="flex-1">{o}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                    
+                                    {completed[active] && (
+                                        <div className="mt-12 bg-emerald-500/10 border border-emerald-500/20 p-8 rounded-3xl text-emerald-400 font-black flex flex-col items-center gap-4 animate-bounce">
+                                            <i data-lucide="check-circle" className="w-10 h-10"></i>
+                                            <span className="text-xs uppercase tracking-[0.3em] text-center">Tópico Dominado com Sucesso</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="h-24 md:hidden"></div>
+                        </div>
+                    </main>
+
+                    {isSidebarOpen && <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-30 md:hidden transition-all" onClick={() => setIsSidebarOpen(false)}></div>}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
+
+```
+
